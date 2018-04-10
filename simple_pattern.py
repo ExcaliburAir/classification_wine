@@ -9,15 +9,17 @@ from keras.models import Model
 from keras.utils import np_utils
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-import matplotlib as plt
-import seaborn as sns
-
+# the super paramaters, it is not enough but ...
+learing_ratio = 0.01 
+batch_size = 5
+train_turns = 8
 
 def to_label_feature(tdf):
     label = np_utils.to_categorical(tdf['label'].values - 1)
     feature = tdf[tdf.columns[1:]].values
     return label, feature
 
+# the evaluation by self define not the keras.
 def evaluation(label, result):
     accuracy = 1.0*np.sum(np.argmax(label, axis = 1) == np.argmax(result, axis = 1)) / label.shape[0]
     loss = np.sum(-np.log(result) * label) / label.shape[0]
@@ -32,7 +34,7 @@ def make_model():
   inp = Input(shape = (13, ))
   oup = Dense(3, activation = 'softmax')(inp)
   model = Model(inputs = inp, outputs = oup)
-  sgd = SGD(lr = 0.01)
+  sgd = SGD(lr = learing_ratio)
   model.compile(loss = 'categorical_crossentropy', optimizer = sgd)
   return model
 
@@ -81,8 +83,8 @@ def main_start_training():
   test_label, test_feature = to_label_feature(test_df)
 
   #fit is the ture training , evaluation is the result by self custarmer
-  for _ in range(8):
-    model.fit(train_feature, train_label, batch_size = 5, epochs = 1, validation_data = (test_feature, test_label))
+  for _ in range(train_turns):
+    model.fit(train_feature, train_label, batch_size = batch_size, epochs = 1, validation_data = (test_feature, test_label))
     train_result = model.predict(train_feature)
     evaluation(train_label, train_result)
     test_result = model.predict(test_feature)
